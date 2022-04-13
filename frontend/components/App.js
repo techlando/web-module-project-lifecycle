@@ -8,15 +8,37 @@ export default class App extends React.Component {
     super()
     this.state = {
       todos: [],
+      error: '',
+      todoNameInput: '',
     }
     
+  }
+  onTodoNameChange = (e) => {
+    const { value } = e.target
+    this.setState({ ...this.state, todoNameInput: value })
+  }
+  postNewTodo = () => {
+    axios.post(URL, {name: this.state.todoNameInput})
+    .then(res => {
+      this.fetchAllTodos()
+      this.setState({...this.state, todoNameInput: ''})
+    })
+    .catch(err => {
+      this.setState({ ...this.state, error: err.response.data.message})
+    })
+  }
+  onTodoFormSubmit = (e) => {
+    e.preventDefault()
+    this.postNewTodo()
   }
   fetchAllTodos = () => {
     axios.get(URL)
     .then(res => {
       this.setState({ ...this.state, todos: res.data.data })
     })
-    .catch(err => console.error(err))
+    .catch(err => {
+      this.setState({ ...this.state, error: err.response.data.message})
+    })
   }
 componentDidMount() {
   this.fetchAllTodos()
@@ -26,16 +48,17 @@ componentDidMount() {
   render() {
     return (
       <div>
-      <h1>Todos:</h1>
-        <ul>
-          {
-            this.state.todos.map(todo => {
-              return <li key={todo.id}>{todo.name}</li>
-            })
-          }
-        </ul>
-        <form>
-        <input />
+      <div id='error'>{this.state.error}</div>
+        <h1>Todos:</h1>
+          <ul>
+            {
+              this.state.todos.map(todo => {
+                return <li key={todo.id}>{todo.name}</li>
+              })
+            }
+          </ul>
+        <form onSubmit={this.onTodoFormSubmit}>
+        <input value={this.state.todoNameInput} onChange={this.onTodoNameChange} type="text" placeholder='Type Todo'/>
           <button>Add</button>
           </form>
           <button>Clear Completed</button>
