@@ -17,29 +17,55 @@ export default class App extends React.Component {
     const { value } = e.target
     this.setState({ ...this.state, todoNameInput: value })
   }
+
+  resetForm = () => {
+    this.setState({...this.state, todoNameInput: ''})
+  }
+
+  setAxiosResponseError = (err) => {
+    this.setState({ ...this.state, error: err.response.data.message})
+  }
+
   postNewTodo = () => {
     axios.post(URL, {name: this.state.todoNameInput})
     .then(res => {
-      this.fetchAllTodos()
-      this.setState({...this.state, todoNameInput: ''})
+      this.setState({ ...this.state, todos: this.state.todos.concat(res.data.data)})
+      this.resetForm()
     })
-    .catch(err => {
-      this.setState({ ...this.state, error: err.response.data.message})
-    })
+    .catch(this.setAxiosResponseError)
   }
+
   onTodoFormSubmit = (e) => {
     e.preventDefault()
     this.postNewTodo()
   }
+
   fetchAllTodos = () => {
     axios.get(URL)
     .then(res => {
       this.setState({ ...this.state, todos: res.data.data })
     })
-    .catch(err => {
-      this.setState({ ...this.state, error: err.response.data.message})
-    })
+    .catch(this.setAxiosResponseError)
+    
   }
+  toggleCompleted = id => {
+    axios.patch(`${URL}/${id}`)
+    .then(res => {
+      debugger
+      // this.setState({
+        
+      //   ...this.state, todos: this.state.todos.map(td => {
+      //     debugger
+      //     if (td.id !== id) return td
+      //     return res.data.data;
+      //   })
+      // })
+    })
+   
+    .catch(this.setAxiosResponseError)
+  }
+
+
 componentDidMount() {
   this.fetchAllTodos()
   
@@ -49,14 +75,16 @@ componentDidMount() {
     return (
       <div>
       <div id='error'>{this.state.error}</div>
+      <div>
         <h1>Todos:</h1>
           <ul>
             {
               this.state.todos.map(todo => {
-                return <li key={todo.id}>{todo.name}</li>
+                return <li onClick={this.toggleCompleted(todo.id)} key={todo.id}>{todo.name} {todo.completed ? ' ✔️' : ''}</li>
               })
             }
           </ul>
+          </div>
         <form onSubmit={this.onTodoFormSubmit}>
         <input value={this.state.todoNameInput} onChange={this.onTodoNameChange} type="text" placeholder='Type Todo'/>
           <button>Add</button>
